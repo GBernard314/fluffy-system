@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minio-deployment
+  labels:
+    app: minio
+spec:
+  selector: 
+    matchLabels:
+      app: minio
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: minio
+    spec:
+      containers:
+        - name: minio
+          image: minio/minio:latest
+          args:
+            - server
+            - /data
+          env:
+            - name: MINIO_ROOT_USER
+              value: "minioadmin"
+            - name: MINIO_ROOT_PASSWORD
+              value: "minioadmin123"
+          ports:
+            - containerPort: 9000 # MinIO API
+            - containerPort: 9001 # MinIO Console
+          volumeMounts:
+            - name: datalake
+              mountPath: /mnt/datalake
+      volumes:
+        - name: datalake
+          persistentVolumeClaim:
+            claimName: nfs-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio-service
+  labels:
+    app: minio
+spec:
+  selector:
+    app: minio
+  ports:
+    - port: 9000
+      targetPort: 9000
+      nodePort: 30900
+      protocol: TCP
+      name: api
+    - port: 9001
+      targetPort: 9001
+      nodePort: 30901
+      protocol: TCP
+      name: console
+  type: LoadBalancer
