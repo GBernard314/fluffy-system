@@ -1,0 +1,19 @@
+FROM python:3.11-slim
+
+# Set work directory
+WORKDIR /app
+
+# Copy requirements (if you have a requirements.txt)
+COPY requirements.txt .
+
+# Install dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy your scrapper code
+COPY ./scrapper.py .
+
+# Set environment variables (optional)
+ENV PYTHONUNBUFFERED=1
+
+# Set the default command to run your scrapper
+CMD ["python", "scrapper.py"]

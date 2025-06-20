@@ -3,6 +3,7 @@
 
 prerequisite : 
 > sudo apt install nfs-common -y
+> sudo snap install docker
 
 1. get kubectl
 > sudo snap install kubectl --classic
@@ -29,5 +30,13 @@ install CSI drivers
 3. apply the deployment
     > kubectl apply -f k3s/deployment.yaml
 
+create a secret for creds 
+> kubectl create secret generic minio-creds --from-env-file=creds.json
 
 acces minio kubectl logs minio-deployment-_574959fd49-ld6b9_
+
+Now the infra should work
+
+Create the scrapper / feeder code and package it 
+
+sudo docker build -t my-scrapper:latest . ; sudo docker save -o my-scrapper.tar my-scrapper:latest ; sudo k3s ctr images import my-scrapper.tar
