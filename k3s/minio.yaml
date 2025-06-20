@@ -20,11 +20,9 @@ spec:
           args:
             - server
             - /data
-          env:
-            - name: MINIO_ROOT_USER
-              value: "minioadmin"
-            - name: MINIO_ROOT_PASSWORD
-              value: "minioadmin123"
+          envFrom:
+            - secretRef:
+                name: minio-creds
           ports:
             - containerPort: 9000 # MinIO API
             - containerPort: 9001 # MinIO Console

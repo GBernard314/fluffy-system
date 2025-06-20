@@ -31,7 +31,7 @@ install CSI drivers
     > kubectl apply -f k3s/deployment.yaml
 
 create a secret for creds 
-> kubectl create secret generic minio-creds --from-env-file=creds.json
+> kubectl create secret generic minio-creds --from-env-file=k3s/creds.env
 
 acces minio kubectl logs minio-deployment-_574959fd49-ld6b9_
 
@@ -39,4 +39,4 @@ Now the infra should work
 
 Create the scrapper / feeder code and package it 
 
-sudo docker build -t my-scrapper:latest . ; sudo docker save -o my-scrapper.tar my-scrapper:latest ; sudo k3s ctr images import my-scrapper.tar
+sudo docker build -t my-scrapper:latest . ; sudo docker save -o my-scrapper.tar my-scrapper:latest ; sudo k3s ctr images import my-scrapper.tar ; kubectl delete -f k3s/scrapper.yaml ; kubectl apply -f k3s/scrapper.yaml ; kubectl get all
