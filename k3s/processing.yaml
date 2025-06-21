@@ -1,0 +1,21 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: processing-cronjob
+spec:
+  schedule: "0 0 * * *"  # Every day at midnight
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: processing
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: processing
+              image: my-processing:latest
+              imagePullPolicy: IfNotPresent
+              envFrom:
+                - secretRef:
+                    name: fuzzy-system-creds

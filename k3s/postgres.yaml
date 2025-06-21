@@ -45,7 +45,11 @@ spec:
           image: postgres:16
           envFrom:
             - secretRef:
-                name: minio-creds
+                name: fuzzy-system-creds
+          env:
+            - name: POSTGRES_DB
+              value: stocksdb
+            
           ports:
             - containerPort: 5432
           volumeMounts:

@@ -19,7 +19,7 @@ spec:
           imagePullPolicy: IfNotPresent
           envFrom:
             - secretRef:
-                name: minio-creds
+                name: fuzzy-system-creds
           # If you want to mount the same PVC:
           volumeMounts:
             - name: minio-data

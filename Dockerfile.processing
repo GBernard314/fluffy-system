@@ -1,0 +1,25 @@
+FROM python:3.11-slim
+
+# Install Java (OpenJDK 11)
+RUN apt-get update && apt-get install -y openjdk-17-jre-headless wget && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install pyspark==3.4.2 boto3 psycopg2-binary --no-cache-dir
+
+RUN mkdir -p /jars && \
+    wget -O /jars/hadoop-aws-3.3.4.jar https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.3.4/hadoop-aws-3.3.4.jar && \
+    wget -O /jars/aws-java-sdk-bundle-1.12.367.jar https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.12.367/aws-java-sdk-bundle-1.12.367.jar
+
+RUN wget -O /jars/postgresql-42.7.3.jar https://repo1.maven.org/maven2/org/postgresql/postgresql/42.7.3/postgresql-42.7.3.jar
+
+COPY ./processing.py .
+
+# Set JAVA_HOME
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+ENV PATH="$JAVA_HOME/bin:$PATH"
+ENV SPARK_HOME=/usr/local/lib/python3.11/site-packages/pyspark
+
+
+CMD ["python", "processing.py"]

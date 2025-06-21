@@ -12,8 +12,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy your scrapper code
 COPY ./scrapper.py .
 
-# Set environment variables (optional)
-ENV PYTHONUNBUFFERED=1
-
 # Set the default command to run your scrapper
 CMD ["python", "scrapper.py"]

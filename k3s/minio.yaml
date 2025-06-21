@@ -22,7 +22,7 @@ spec:
             - /mnt/datalake
           envFrom:
             - secretRef:
-                name: minio-creds
+                name: fuzzy-system-creds
           ports:
             - containerPort: 9000 # MinIO API
             - containerPort: 9001 # MinIO Console
