@@ -19,7 +19,7 @@ spec:
           image: minio/minio:latest
           args:
             - server
-            - /data
+            - /mnt/datalake
           envFrom:
             - secretRef:
                 name: minio-creds
@@ -32,7 +32,7 @@ spec:
       volumes:
         - name: datalake
           persistentVolumeClaim:
-            claimName: nfs-pvc
+            claimName: datalake-pvc
 ---
 apiVersion: v1
 kind: Service

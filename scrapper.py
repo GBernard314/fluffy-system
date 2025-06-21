@@ -5,8 +5,8 @@ from datetime import datetime, timezone
 
 BUCKET = os.environ["MINIO_BUCKET"]
 
-MINIO_ACCESS_KEY = os.environ['MINIO_ACCESS_KEY']
-MINIO_SECRET_KEY = os.environ['MINIO_SECRET_KEY']
+MINIO_ROOT_USER = os.environ['MINIO_ROOT_USER']
+MINIO_ROOT_PASSWORD = os.environ['MINIO_ROOT_PASSWORD']
 
 MINIO_URL = os.environ.get("MINIO_ENDPOINT", "minio-service:9000")
 
@@ -14,8 +14,8 @@ FINNHUB_API_KEY = os.environ['FINNHUB_API_KEY']
 
 minio_client = Minio(
     MINIO_URL,
-    access_key= MINIO_ACCESS_KEY,
-    secret_key= MINIO_SECRET_KEY,
+    access_key= MINIO_ROOT_USER,
+    secret_key= MINIO_ROOT_PASSWORD,
     secure=False  # Set to True if using HTTPS
 )
 

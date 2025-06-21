@@ -40,3 +40,8 @@ Now the infra should work
 Create the scrapper / feeder code and package it 
 
 sudo docker build -t my-scrapper:latest . ; sudo docker save -o my-scrapper.tar my-scrapper:latest ; sudo k3s ctr images import my-scrapper.tar ; kubectl delete -f k3s/scrapper.yaml ; kubectl apply -f k3s/scrapper.yaml ; kubectl get all
+
+
+kubectl exec -it pod/minio-deployment-5bf87466c9-d5gmq -- /bin/sh
+ls -l /data
+touch /data/testfile
