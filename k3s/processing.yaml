@@ -18,4 +18,4 @@ spec:
               imagePullPolicy: IfNotPresent
               envFrom:
                 - secretRef:
-                    name: fuzzy-system-creds
+                    name: fluffy-system-creds

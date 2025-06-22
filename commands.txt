@@ -1,1 +1,0 @@
-kubectl delete minio-deployment ; kubectl delete svc minio-service ; kubectl delete pvc smb-pvc ; kubectl delete pv smb-pv

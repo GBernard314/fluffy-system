@@ -39,7 +39,7 @@ spec:
   storageClassName: manual  
   nfs:
     server: 192.168.1.83 # NFS server IP address 
-    path: "/mnt/user/dbs/fuzzy-system"   # NFS share location 
+    path: "/mnt/user/dbs/fluffy-system"   # NFS share location 
 
 ---
 apiVersion: v1

@@ -1,50 +1,179 @@
-# fluffy-system
+# Fluffy System: Spark Data Pipeline with MinIO and PostgreSQL
+[![wakatime](https://wakatime.com/badge/github/GBernard314/fluffy-system.svg)](https://wakatime.com/@Azarogue/projects/mglllgawlh?start=2025-06-19&end=2025-06-22)
+## Overview
+
+This project implements a data processing pipeline using PySpark, MinIO (S3-compatible object storage), and PostgreSQL, all orchestrated on Kubernetes.  
+It reads JSON data from MinIO, processes it with Spark, and writes results to a PostgreSQL database.  
+All components are containerized and configured for cloud-native deployment.
+
+---
+
+## Prerequisites
+
+- NFS server for persistent storage (for PostgreSQL and the datalake)
+```bash
+sudo apt install nfs-common -y
+```
+- [kubectl](https://kubernetes.io/docs/tasks/tools/) installed and configured
+```bash
+sudo snap install kubectl --classic
+```
+- Docker (for building images)
+```bash
+sudo snap install docker
+```
+- Access to a container registry (optional, for pushing images, as of now, everythign is locally hosted)
+
+- Ready to use NFS Shares on your server (1 for the Datalake and one for the DB)
+```bash
+mkdir -p /yourmountpointforpv
+chmod 777 /yourmountpointforpv # dangerous, maybe adequate user / permissions are required
+```
+---
+
+## Project Structure
+
+```bash
+.
+├── k3s/
+│   ├── minio.yaml            # MinIO Deployment, Service, and PVC
+│   ├── postgres.yaml         # PostgreSQL Deployment, Service, and PVC
+│   ├── processing.yaml       # Spark processing Job/CronJob
+│   ├── pv.yaml               # Creation of PV and PVC for NFS Shares
+│   └── scrapper.yaml         # Python scrapping deployment
+├── Dockerfile.processing     # Dockerfile for the Spark processing job
+├── Dockerfile.scrapper       # Dockerfile for the scrapping job
+├── processing.py             # Main PySpark processing script
+├── scrapper.py               # Main Python scrapper script (Finnhub.io)
+├── requirements.txt          # Python dependencies for the scrapper, for processing it's self contained
+├── icon.png          
+└── README.md
+```
+
+---
+
+## Setup & Deployment
+
+### 1. **Clone the Repository**
+
+```bash
+git clone https://github.com/GBernard314/fluffy-system
+cd fluffy-system
+```
+
+### 2. **Create the Persistent Volumes and Claims**
+
+Edit `k3s/pv.yaml` to fit your NFS shares on your server.
+
+```bash
+kubectl apply -f k3s/pv.yaml
+```
+
+### 3. **Configure Secrets**
+
+Edit `k3s/creds.env` and add your MinIO and PostgreSQL credentials.  
+**Do not commit real credentials to version control!**
+
+Create the secret:
+```bash
+kubectl create secret generic fluffy-system-creds --from-env-file=k3s/creds.env
+```
+
+### 4. **Deploy PostgreSQL**
+
+```bash
+kubectl apply -f k3s/postgres.yaml
+```
+
+### 5. **Deploy MinIO**
+
+```bash
+kubectl apply -f k3s/minio.yaml
+```
+
+### 6. **Build and Push the Scrapper Docker Image**
+
+(Optional) If you want to monitor different stocks you can go in ```scrapper.py``` and look for this part of code and do what you must : 
+```python
+def on_open(ws):
+    ws.send('{"type":"subscribe","symbol":"WPEA"}')
+    ws.send('{"type":"subscribe","symbol":"DCAM"}')
+    ws.send('{"type":"subscribe","symbol":"MIWO00000PUS"}')
+    ws.send('{"type":"subscribe","symbol":"AAPL"}')
+    ws.send('{"type":"subscribe","symbol":"BINANCE:BTCEUR"}')
+    ws.send('{"type":"subscribe","symbol":"BINANCE:XRPEUR"}')
+```
+
+Then build the image:
+```bash
+docker build -f Dockerfile.scrapper -t my-scrapper:latest .
+docker save -o my-scrapper.tar my-scrapper:latest
+k3s ctr images import my-scrapper.tar
+```
 
 
-prerequisite : 
-> sudo apt install nfs-common -y
-> sudo snap install docker
+### 7. **Deploy the Scrapper Deployment**
 
-1. get kubectl
-> sudo snap install kubectl --classic
-and k3s :
-> curl -sfL https://get.k3s.io | sh -
+Apply the deployment:
+```bash
+kubectl apply -f k3s/scrapper.yaml
+```
 
-#### If you get an error
-> curl -sfL https://get.k3s.io | sh -
+### 8. **Build and Push the Processing Docker Image**
 
-Dont forget to copy the .kube config
-> mkdir -p ~/.kube
-sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
-sudo chown $USER:$USER ~/.kube/config
+Build the image:
+```bash
+docker build -f Dockerfile.processing -t my-processing:latest .
+docker save -o my-processing.tar my-processing:latest
+k3s ctr images import my-processing.tar
+```
 
-install CSI drivers
-> kubectl apply -f k3s/install-driver.yaml 
+### 9. **Deploy the Processing Job or CronJob**
 
-2. apply the config for the pv (if you need, create the actual directory where you need it to be)
-    - mkdir -p /yourmountpointforpv
-    - maybe chmod 777 it
-    - then 
-    > kubectl apply -f k3s/pv.yaml
-
-3. apply the deployment
-    > kubectl apply -f k3s/deployment.yaml
-
-create a secret for creds 
-> kubectl create secret generic fuzzy-system-creds --from-env-file=k3s/creds.env
-kubectl delete secret --all ; kubectl create secret generic fuzzy-system-creds --from-env-file=k3s/creds.env
-
-acces minio kubectl logs minio-deployment-_574959fd49-ld6b9_
-
-Now the infra should work
-
-Create the scrapper / feeder code and package it 
-
-sudo docker build -f Dockerfile.scrapper -t my-scrapper:latest . ; sudo docker save -o my-scrapper.tar my-scrapper:latest ; sudo k3s ctr images import my-scrapper.tar ; kubectl delete -f k3s/scrapper.yaml ; kubectl apply -f k3s/scrapper.yaml ; kubectl get all
-
-sudo docker build -f Dockerfile.processing -t my-processing:latest . ; sudo docker save -o my-processing.tar my-processing:latest ; sudo k3s ctr images import my-processing.tar ; kubectl delete -f k3s/processing.yaml ; kubectl apply -f k3s/processing.yaml ; sleep 5 ; kubectl get all
+(Optional) Adapt the cron schedule at your will (refer to [crontab.guru](https://crontab.guru))
 
 
-kubectl exec -it pod/minio-deployment-5bf87466c9-d5gmq -- /bin/sh
-ls -l /data
-touch /data/testfile
+Apply scheduled cronJob:
+```bash
+kubectl apply -f k3s/processing.yaml
+```
+
+---
+
+## Usage
+
+- The scrapper job is connected to the websocket of Finnhub.io and write continuously to the MinIO datalake.
+- The processing job will read from MinIO, process the data, and write results to PostgreSQL, on a daily basis according to cron in ```k3s/processing.yaml```.
+- You can query results in PostgreSQL using `psql` or any SQL client.
+
+---
+
+## Troubleshooting
+
+- **Permissions errors with PostgreSQL on NFS:**  
+  Ensure your NFS export uses `no_root_squash` and the data directory is owned by UID 999.
+- **Cannot connect to MinIO or PostgreSQL:**  
+  Check service endpoints and credentials in your creds.env and YAML files.
+- **Job fails with missing JARs:**  
+  Make sure your Dockerfile downloads the correct Hadoop AWS and JDBC driver JARs.
+
+---
+
+## Security Notes
+
+- **Never commit real credentials** to version control.
+- Use Kubernetes secrets for all sensitive data.
+- Restrict NFS and MinIO access to trusted networks.
+
+---
+
+## License
+
+MIT
+
+---
+
+## Author
+
+Guillaume BERNARD  
+guillaume.bernard31415@gmail.com

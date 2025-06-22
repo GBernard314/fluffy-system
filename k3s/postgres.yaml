@@ -17,7 +17,7 @@ spec:
           image: postgres:16
           envFrom:
             - secretRef:
-                name: fuzzy-system-creds
+                name: fluffy-system-creds
           env:
             - name: POSTGRES_DB
               value: stocksdb
